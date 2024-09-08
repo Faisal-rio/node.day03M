@@ -4,6 +4,11 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 
+// Function to generate a 10-digit alphanumeric ID
+const generateId = () => {
+  return Math.random().toString(36).substr(2, 10).toUpperCase();
+};
+
 // Initialize Express app
 const app = express();
 
@@ -25,20 +30,23 @@ app.get("/", (req, res) => {
 });
 
 // Connect to MongoDB using environment variable
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('Error connecting to MongoDB:', err));
 
+
 // Define Mentor and Student Schemas
 const mentorSchema = new mongoose.Schema({
+  _id: { type: String, default: generateId },
   name: String,
-  students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }],
+  students: [{ type: String, ref: 'Student' }],  // Changed ObjectId to String
 });
 
 const studentSchema = new mongoose.Schema({
+  _id: { type: String, default: generateId },
   name: String,
-  mentor: { type: mongoose.Schema.Types.ObjectId, ref: 'Mentor' },
-  previousMentor: { type: mongoose.Schema.Types.ObjectId, ref: 'Mentor' },
+  mentor: { type: String, ref: 'Mentor' },  // Changed ObjectId to String
+  previousMentor: { type: String, ref: 'Mentor' },  // Changed ObjectId to String
 });
 
 // Create models
@@ -51,7 +59,7 @@ app.get('/mentors', async (req, res) => {
     const mentors = await Mentor.find();
     res.send(mentors);
   } catch (error) {
-    res.status(500).send(error);
+    res.status(500).send({ error: 'Error fetching mentors', details: error.message });
   }
 });
 
@@ -61,7 +69,7 @@ app.get('/students', async (req, res) => {
     const students = await Student.find();
     res.send(students);
   } catch (error) {
-    res.status(500).send(error);
+    res.status(500).send({ error: 'Error fetching students', details: error.message });
   }
 });
 
@@ -72,7 +80,7 @@ app.post('/mentors', async (req, res) => {
     await mentor.save();
     res.status(201).send(mentor);
   } catch (error) {
-    res.status(500).send(error);
+    res.status(500).send({ error: 'Error creating mentor', details: error.message });
   }
 });
 
@@ -83,7 +91,7 @@ app.post('/students', async (req, res) => {
     await student.save();
     res.status(201).send(student);
   } catch (error) {
-    res.status(500).send(error);
+    res.status(500).send({ error: 'Error creating student', details: error.message });
   }
 });
 
@@ -110,7 +118,7 @@ app.post('/mentors/:mentorId/students/:studentId', async (req, res) => {
 
     res.send(mentor);
   } catch (error) {
-    res.status(500).send(error);
+    res.status(500).send({ error: 'Error assigning student to mentor', details: error.message });
   }
 });
 
@@ -137,7 +145,7 @@ app.put('/students/:studentId/mentor/:mentorId', async (req, res) => {
 
     res.send(student);
   } catch (error) {
-    res.status(500).send(error);
+    res.status(500).send({ error: 'Error updating student mentor', details: error.message });
   }
 });
 
@@ -151,7 +159,7 @@ app.get('/mentors/:mentorId/students', async (req, res) => {
     }
     res.send(mentor.students);
   } catch (error) {
-    res.status(500).send(error);
+    res.status(500).send({ error: 'Error fetching students for mentor', details: error.message });
   }
 });
 
@@ -165,13 +173,14 @@ app.get('/students/:studentId/previous-mentor', async (req, res) => {
     }
     res.send(student.previousMentor);
   } catch (error) {
-    res.status(500).send(error);
+    res.status(500).send({ error: 'Error fetching previous mentor for student', details: error.message });
   }
 });
 
 // Start the server
-app.listen(process.env.PORT, () => {
-  console.log(`Server is running on port ${process.env.PORT}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
 
 module.exports = app;
