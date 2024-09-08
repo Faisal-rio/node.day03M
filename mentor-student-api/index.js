@@ -15,6 +15,29 @@ const app = express();
 // Middleware
 app.use(bodyParser.json());
 
+// Connect to MongoDB using environment variable
+mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/mentor-student')
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('Error connecting to MongoDB:', err));
+
+// Define Mentor and Student Schemas
+const mentorSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, default: mongoose.Types.ObjectId },
+  name: String,
+  students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }],
+});
+
+const studentSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, default: mongoose.Types.ObjectId },
+  name: String,
+  mentor: { type: mongoose.Schema.Types.ObjectId, ref: 'Mentor' },
+  previousMentor: { type: mongoose.Schema.Types.ObjectId, ref: 'Mentor' },
+});
+
+// Create models
+const Mentor = mongoose.model('Mentor', mentorSchema);
+const Student = mongoose.model('Student', studentSchema);
+
 // Root endpoint with welcoming message and navigation links
 app.get("/", (req, res) => {
   res.send(`
@@ -28,29 +51,6 @@ app.get("/", (req, res) => {
         </ul>
     `);
 });
-
-// Connect to MongoDB using environment variable
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('Error connecting to MongoDB:', err));
-
-// Define Mentor and Student Schemas
-const mentorSchema = new mongoose.Schema({
-  _id: { type: String, default: generateId },
-  name: String,
-  students: [{ type: String, ref: 'Student' }],  // Changed ObjectId to String
-});
-
-const studentSchema = new mongoose.Schema({
-  _id: { type: String, default: generateId },
-  name: String,
-  mentor: { type: String, ref: 'Mentor' },  // Changed ObjectId to String
-  previousMentor: { type: String, ref: 'Mentor' },  // Changed ObjectId to String
-});
-
-// Create models
-const Mentor = mongoose.model('Mentor', mentorSchema);
-const Student = mongoose.model('Student', studentSchema);
 
 // API to get all mentors
 app.get('/mentors', async (req, res) => {
