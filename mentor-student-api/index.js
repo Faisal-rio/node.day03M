@@ -34,7 +34,6 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('Error connecting to MongoDB:', err));
 
-
 // Define Mentor and Student Schemas
 const mentorSchema = new mongoose.Schema({
   _id: { type: String, default: generateId },
@@ -179,6 +178,7 @@ app.get('/students/:studentId/previous-mentor', async (req, res) => {
 
 // Start the server
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
